@@ -24,6 +24,7 @@ type DataTableProps<T = any> = {
   showActions?: boolean;
   onUpdate?: (row: T) => void;
   onDelete?: (row: T) => void;
+  customActions?: (row: T) => React.ReactNode;
   keyExtractor?: (row: T, index: number) => string | number;
 };
 
@@ -34,6 +35,7 @@ export function DataTable<T extends Record<string, any>>({
   showActions = false,
   onUpdate,
   onDelete,
+  customActions,
   keyExtractor,
 }: DataTableProps<T>) {
   // Generate columns from data if not provided
@@ -107,24 +109,28 @@ export function DataTable<T extends Record<string, any>>({
                 {getCellValue(row, column)}
               </TableCell>
             ))}
-            {showActions && (onUpdate || onDelete) && (
+            {showActions && (onUpdate || onDelete || customActions) && (
               <TableCell>
                 <div className="flex gap-2">
-                  {onUpdate && (
-                    <button
-                      onClick={() => onUpdate(row)}
-                      className="text-primary hover:underline text-sm"
-                    >
-                      Update
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button
-                      onClick={() => onDelete(row)}
-                      className="text-destructive hover:underline text-sm"
-                    >
-                      Delete
-                    </button>
+                  {customActions ? customActions(row) : (
+                    <>
+                      {onUpdate && (
+                        <button
+                          onClick={() => onUpdate(row)}
+                          className="text-primary hover:underline text-sm"
+                        >
+                          Update
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          onClick={() => onDelete(row)}
+                          className="text-destructive hover:underline text-sm"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </TableCell>

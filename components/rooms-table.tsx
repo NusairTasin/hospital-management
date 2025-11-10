@@ -19,11 +19,11 @@ import {
 } from '@/components/ui/field'
 import { useRouter } from 'next/navigation'
 
-type NurseTableProps = {
+type RoomsTableProps = {
   data: Record<string, any>[]
 }
 
-export default function NurseTable({ data }: NurseTableProps) {
+export default function RoomsTable({ data }: RoomsTableProps) {
   const router = useRouter()
   const [insertDialogOpen, setInsertDialogOpen] = useState(false)
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
@@ -35,7 +35,9 @@ export default function NurseTable({ data }: NurseTableProps) {
 
   const handleUpdate = (row: Record<string, any>) => {
     setSelectedRow(row)
-    setFormData({ ...row })
+    // Exclude Status as it's calculated, not stored
+    const { Status, ...updateableData } = row
+    setFormData(updateableData)
     setUpdateDialogOpen(true)
   }
 
@@ -47,10 +49,17 @@ export default function NurseTable({ data }: NurseTableProps) {
   const handleUpdateSubmit = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/nurse', {
+      // Ensure Room_ID is included and exclude Status
+      const updateData = {
+        Room_ID: formData.Room_ID || selectedRow?.Room_ID,
+        RoomType: formData.RoomType,
+        RoomCost: parseFloat(formData.RoomCost) || 0
+      }
+      
+      const response = await fetch('/api/rooms', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updateData),
       })
       const result = await response.json()
       if (result.success) {
@@ -59,11 +68,11 @@ export default function NurseTable({ data }: NurseTableProps) {
         setFormData({})
         router.refresh()
       } else {
-        alert(result.error || 'Failed to update nurse')
+        alert(result.error || 'Failed to update room')
       }
     } catch (error) {
       console.error(error)
-      alert('Failed to update nurse')
+      alert('Failed to update room')
     } finally {
       setLoading(false)
     }
@@ -72,8 +81,8 @@ export default function NurseTable({ data }: NurseTableProps) {
   const handleDeleteConfirm = async () => {
     setLoading(true)
     try {
-      const id = selectedRow?.nurse_id || selectedRow?.eid
-      const response = await fetch(`/api/nurse?nurse_id=${id}`, {
+      const id = selectedRow?.Room_ID || selectedRow?.room_id || selectedRow?.rid
+      const response = await fetch(`/api/rooms?room_id=${id}`, {
         method: 'DELETE',
       })
       const result = await response.json()
@@ -82,35 +91,38 @@ export default function NurseTable({ data }: NurseTableProps) {
         setSelectedRow(null)
         router.refresh()
       } else {
-        alert(result.error || 'Failed to delete nurse')
+        alert(result.error || 'Failed to delete room')
       }
     } catch (error) {
       console.error(error)
-      alert('Failed to delete nurse')
+      alert('Failed to delete room')
     } finally {
       setLoading(false)
     }
   }
 
   const handleInsert = () => {
-    // Initialize insert form with empty values
-    const emptyData: Record<string, any> = {}
-    if (data.length > 0) {
-      Object.keys(data[0]).forEach(key => {
-        emptyData[key] = ''
-      })
-    }
-    setInsertFormData(emptyData)
+    setInsertFormData({
+      Room_ID: '',
+      RoomType: '',
+      RoomCost: ''
+    })
     setInsertDialogOpen(true)
   }
 
   const handleInsertSubmit = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/nurse', {
+      const roomData = {
+        Room_ID: insertFormData.Room_ID,
+        RoomType: insertFormData.RoomType,
+        RoomCost: parseFloat(insertFormData.RoomCost) || 0
+      }
+      
+      const response = await fetch('/api/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(insertFormData),
+        body: JSON.stringify(roomData),
       })
       const result = await response.json()
       if (result.success) {
@@ -118,11 +130,11 @@ export default function NurseTable({ data }: NurseTableProps) {
         setInsertFormData({})
         router.refresh()
       } else {
-        alert(result.error || 'Failed to add nurse')
+        alert(result.error || 'Failed to add room')
       }
     } catch (error) {
       console.error(error)
-      alert('Failed to add nurse')
+      alert('Failed to add room')
     } finally {
       setLoading(false)
     }
@@ -136,14 +148,16 @@ export default function NurseTable({ data }: NurseTableProps) {
     setInsertFormData(prev => ({ ...prev, [key]: value }))
   }
 
-  // Get all keys from the first row to generate form fields
-  const formFields = data.length > 0 ? Object.keys(data[0]) : []
+  // Get updateable fields (exclude Status as it's calculated)
+  const updateableFields = data.length > 0 
+    ? Object.keys(data[0]).filter(key => key !== 'Status')
+    : ['Room_ID', 'RoomType', 'RoomCost']
 
   return (
     <>
       <div className="mb-4 flex justify-end">
         <Button onClick={handleInsert} disabled={loading}>
-          Add New Nurse
+          Add New Room
         </Button>
       </div>
       <DataTable
@@ -158,27 +172,56 @@ export default function NurseTable({ data }: NurseTableProps) {
         <DialogContent>
           <DialogClose onClose={() => setUpdateDialogOpen(false)} />
           <DialogHeader>
-            <DialogTitle>Update Nurse</DialogTitle>
+            <DialogTitle>Update Room</DialogTitle>
             <DialogDescription>
-              Update the nurse information below. Click save when you're done.
+              Update the room information below. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <FieldGroup>
-              {formFields.map((key) => (
-                <Field key={key}>
-                  <FieldLabel htmlFor={key}>
-                    {key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}
-                  </FieldLabel>
-                  <Input
-                    id={key}
-                    type={typeof formData[key] === 'number' ? 'number' : 'text'}
-                    value={formData[key] ?? ''}
-                    onChange={(e) => handleInputChange(key, e.target.value)}
-                    disabled={loading}
-                  />
-                </Field>
-              ))}
+              <Field>
+                <FieldLabel htmlFor="Room_ID">Room ID</FieldLabel>
+                <Input
+                  id="Room_ID"
+                  type="text"
+                  value={formData.Room_ID ?? ''}
+                  onChange={(e) => handleInputChange('Room_ID', e.target.value)}
+                  disabled={loading}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="RoomType">Room Type</FieldLabel>
+                <Input
+                  id="RoomType"
+                  type="text"
+                  value={formData.RoomType ?? ''}
+                  onChange={(e) => handleInputChange('RoomType', e.target.value)}
+                  disabled={loading}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="RoomCost">Room Cost</FieldLabel>
+                <Input
+                  id="RoomCost"
+                  type="number"
+                  step="0.01"
+                  value={formData.RoomCost ?? ''}
+                  onChange={(e) => handleInputChange('RoomCost', e.target.value)}
+                  disabled={loading}
+                />
+              </Field>
+              <Field>
+                <FieldLabel>Status</FieldLabel>
+                <Input
+                  type="text"
+                  value={selectedRow?.Status || 'Calculated automatically'}
+                  disabled={true}
+                  className="bg-gray-100"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Status is automatically calculated based on room allocation
+                </p>
+              </Field>
             </FieldGroup>
           </div>
           <DialogFooter>
@@ -201,27 +244,47 @@ export default function NurseTable({ data }: NurseTableProps) {
         <DialogContent>
           <DialogClose onClose={() => setInsertDialogOpen(false)} />
           <DialogHeader>
-            <DialogTitle>Add New Nurse</DialogTitle>
+            <DialogTitle>Add New Room</DialogTitle>
             <DialogDescription>
-              Enter the nurse information below. Click save when you're done.
+              Enter the room information below. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <FieldGroup>
-              {formFields.map((key) => (
-                <Field key={key}>
-                  <FieldLabel htmlFor={`insert-${key}`}>
-                    {key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}
-                  </FieldLabel>
-                  <Input
-                    id={`insert-${key}`}
-                    type={typeof insertFormData[key] === 'number' ? 'number' : 'text'}
-                    value={insertFormData[key] ?? ''}
-                    onChange={(e) => handleInsertInputChange(key, e.target.value)}
-                    disabled={loading}
-                  />
-                </Field>
-              ))}
+              <Field>
+                <FieldLabel htmlFor="insert-Room_ID">Room ID</FieldLabel>
+                <Input
+                  id="insert-Room_ID"
+                  type="text"
+                  value={insertFormData.Room_ID ?? ''}
+                  onChange={(e) => handleInsertInputChange('Room_ID', e.target.value)}
+                  disabled={loading}
+                  placeholder="e.g., R101"
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="insert-RoomType">Room Type</FieldLabel>
+                <Input
+                  id="insert-RoomType"
+                  type="text"
+                  value={insertFormData.RoomType ?? ''}
+                  onChange={(e) => handleInsertInputChange('RoomType', e.target.value)}
+                  disabled={loading}
+                  placeholder="e.g., Single, Double, ICU"
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="insert-RoomCost">Room Cost (per day)</FieldLabel>
+                <Input
+                  id="insert-RoomCost"
+                  type="number"
+                  step="0.01"
+                  value={insertFormData.RoomCost ?? ''}
+                  onChange={(e) => handleInsertInputChange('RoomCost', e.target.value)}
+                  disabled={loading}
+                  placeholder="0.00"
+                />
+              </Field>
             </FieldGroup>
           </div>
           <DialogFooter>
@@ -233,7 +296,7 @@ export default function NurseTable({ data }: NurseTableProps) {
               Cancel
             </Button>
             <Button onClick={handleInsertSubmit} disabled={loading}>
-              {loading ? 'Adding...' : 'Add Nurse'}
+              {loading ? 'Adding...' : 'Add Room'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -244,9 +307,9 @@ export default function NurseTable({ data }: NurseTableProps) {
         <DialogContent>
           <DialogClose onClose={() => setDeleteDialogOpen(false)} />
           <DialogHeader>
-            <DialogTitle>Delete Nurse</DialogTitle>
+            <DialogTitle>Delete Room</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this nurse? This action cannot be undone.
+              Are you sure you want to delete this room? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -270,5 +333,4 @@ export default function NurseTable({ data }: NurseTableProps) {
     </>
   )
 }
-
 

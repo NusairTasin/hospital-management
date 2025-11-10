@@ -15,6 +15,8 @@ export default function DashboardLayout({
             <ul><a href="/dashboard/doctor">Doctor</a></ul>
             <ul><a href="/dashboard/patient">Patient</a></ul>
             <ul><a href="/dashboard/rooms">Rooms</a></ul>
+            <ul><a href="/dashboard/tests">Tests</a></ul>
+            <ul><a href="/dashboard/medicines">Medicines</a></ul>
         </li>
     </nav>
     <div>

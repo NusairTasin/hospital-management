@@ -19,11 +19,11 @@ import {
 } from '@/components/ui/field'
 import { useRouter } from 'next/navigation'
 
-type NurseTableProps = {
+type DoctorTableProps = {
   data: Record<string, any>[]
 }
 
-export default function NurseTable({ data }: NurseTableProps) {
+export default function DoctorTable({ data }: DoctorTableProps) {
   const router = useRouter()
   const [insertDialogOpen, setInsertDialogOpen] = useState(false)
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
@@ -47,7 +47,7 @@ export default function NurseTable({ data }: NurseTableProps) {
   const handleUpdateSubmit = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/nurse', {
+      const response = await fetch('/api/doctor', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -59,11 +59,11 @@ export default function NurseTable({ data }: NurseTableProps) {
         setFormData({})
         router.refresh()
       } else {
-        alert(result.error || 'Failed to update nurse')
+        alert(result.error || 'Failed to update doctor')
       }
     } catch (error) {
       console.error(error)
-      alert('Failed to update nurse')
+      alert('Failed to update doctor')
     } finally {
       setLoading(false)
     }
@@ -72,8 +72,8 @@ export default function NurseTable({ data }: NurseTableProps) {
   const handleDeleteConfirm = async () => {
     setLoading(true)
     try {
-      const id = selectedRow?.nurse_id || selectedRow?.eid
-      const response = await fetch(`/api/nurse?nurse_id=${id}`, {
+      const id = selectedRow?.doctor_id || selectedRow?.eid
+      const response = await fetch(`/api/doctor?doctor_id=${id}`, {
         method: 'DELETE',
       })
       const result = await response.json()
@@ -82,18 +82,17 @@ export default function NurseTable({ data }: NurseTableProps) {
         setSelectedRow(null)
         router.refresh()
       } else {
-        alert(result.error || 'Failed to delete nurse')
+        alert(result.error || 'Failed to delete doctor')
       }
     } catch (error) {
       console.error(error)
-      alert('Failed to delete nurse')
+      alert('Failed to delete doctor')
     } finally {
       setLoading(false)
     }
   }
 
   const handleInsert = () => {
-    // Initialize insert form with empty values
     const emptyData: Record<string, any> = {}
     if (data.length > 0) {
       Object.keys(data[0]).forEach(key => {
@@ -107,7 +106,7 @@ export default function NurseTable({ data }: NurseTableProps) {
   const handleInsertSubmit = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/nurse', {
+      const response = await fetch('/api/doctor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(insertFormData),
@@ -118,11 +117,11 @@ export default function NurseTable({ data }: NurseTableProps) {
         setInsertFormData({})
         router.refresh()
       } else {
-        alert(result.error || 'Failed to add nurse')
+        alert(result.error || 'Failed to add doctor')
       }
     } catch (error) {
       console.error(error)
-      alert('Failed to add nurse')
+      alert('Failed to add doctor')
     } finally {
       setLoading(false)
     }
@@ -136,14 +135,13 @@ export default function NurseTable({ data }: NurseTableProps) {
     setInsertFormData(prev => ({ ...prev, [key]: value }))
   }
 
-  // Get all keys from the first row to generate form fields
   const formFields = data.length > 0 ? Object.keys(data[0]) : []
 
   return (
     <>
       <div className="mb-4 flex justify-end">
         <Button onClick={handleInsert} disabled={loading}>
-          Add New Nurse
+          Add New Doctor
         </Button>
       </div>
       <DataTable
@@ -158,9 +156,9 @@ export default function NurseTable({ data }: NurseTableProps) {
         <DialogContent>
           <DialogClose onClose={() => setUpdateDialogOpen(false)} />
           <DialogHeader>
-            <DialogTitle>Update Nurse</DialogTitle>
+            <DialogTitle>Update Doctor</DialogTitle>
             <DialogDescription>
-              Update the nurse information below. Click save when you're done.
+              Update the doctor information below. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -201,9 +199,9 @@ export default function NurseTable({ data }: NurseTableProps) {
         <DialogContent>
           <DialogClose onClose={() => setInsertDialogOpen(false)} />
           <DialogHeader>
-            <DialogTitle>Add New Nurse</DialogTitle>
+            <DialogTitle>Add New Doctor</DialogTitle>
             <DialogDescription>
-              Enter the nurse information below. Click save when you're done.
+              Enter the doctor information below. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -233,7 +231,7 @@ export default function NurseTable({ data }: NurseTableProps) {
               Cancel
             </Button>
             <Button onClick={handleInsertSubmit} disabled={loading}>
-              {loading ? 'Adding...' : 'Add Nurse'}
+              {loading ? 'Adding...' : 'Add Doctor'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -244,9 +242,9 @@ export default function NurseTable({ data }: NurseTableProps) {
         <DialogContent>
           <DialogClose onClose={() => setDeleteDialogOpen(false)} />
           <DialogHeader>
-            <DialogTitle>Delete Nurse</DialogTitle>
+            <DialogTitle>Delete Doctor</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this nurse? This action cannot be undone.
+              Are you sure you want to delete this doctor? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -270,5 +268,4 @@ export default function NurseTable({ data }: NurseTableProps) {
     </>
   )
 }
-
 
